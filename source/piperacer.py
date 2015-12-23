@@ -187,12 +187,12 @@ def rot_center(image, angle):
 	
 def getWaterTile(tileNr):
 	return {
-		0: "pipeUpDownWater.png",
-        1: "pipeTurnWater.png",
-        2: "pipeTurnWater.png",
-		3: "pipeTurnWater.png",
-		4: "pipeStuckUpDownWater.png",
-		5: "pipeStuckLeftRightWater.png",
+		0: "../res/pipeUpDownWater.png",
+        1: "../res/pipeTurnWater.png",
+        2: "../res/pipeTurnWater.png",
+		3: "../res/pipeTurnWater.png",
+		4: "../res/pipeStuckUpDownWater.png",
+		5: "../res/pipeStuckLeftRightWater.png",
 		
 		
 	}[tileNr]
@@ -200,12 +200,12 @@ def getWaterTile(tileNr):
 	
 def getTile(tileNr):
 	return {
-		0: "pipeUpDown.png",
-        1: "pipeTurn.png", #1: "pipeTsection.png",
-        2: "pipeTurn.png",#2: "pipeCross.png",
-		3: "pipeTurn.png",
-		4: "pipeStuckUpDown.png",
-		5: "pipeStuckLeftRight.png",
+		0: "../res/pipeUpDown.png",
+        1: "../res/pipeTurn.png", #1: "pipeTsection.png",
+        2: "../res/pipeTurn.png",#2: "pipeCross.png",
+		3: "../res/pipeTurn.png",
+		4: "../res/pipeStuckUpDown.png",
+		5: "../res/pipeStuckLeftRight.png",
 		
 	}[tileNr]
 
@@ -236,7 +236,7 @@ def startGraphics(w,h):
 	
 	pygame.display.flip()
 	running = 1
-	background = pygame.image.load("background.png").convert()			
+	background = pygame.image.load("../res/background.png").convert()			
 	background = pygame.transform.scale(background, (w,h))
 	backgroundpos = background.get_rect(center=(w/2,h/2))
 	screen.blit(background,backgroundpos)		
@@ -279,7 +279,7 @@ while play:
 				angle = angle % 360
 				board[newX][newY] = (tuple[0],angle)
 			
-	panel = pygame.image.load("panel.jpg").convert()
+	panel = pygame.image.load("../res/panel.jpg").convert()
 	panel = pygame.transform.scale(panel, (w-UIStartX, h))
 	screen.blit(panel,(UIStartX, 0))
 	
