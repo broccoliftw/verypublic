@@ -1,12 +1,138 @@
 # -*- coding: latin-1 -*-
-import pygame,math,sys
+import pygame,math,sys,os
 from pygame.locals import *
-import os
-from random import *
 from pygame.compat import geterror
+from random import *
+from PipeSegment import *
+#functions
+
+def startGraphics(w,h):
+	pygame.init()
+	screen = pygame.display.set_mode((1600,900),FULLSCREEN)
+	
+	pygame.display.flip()
+	running = 1
+	background = pygame.image.load("../res/background.png").convert()			
+	background = pygame.transform.scale(background, (w,h))
+	backgroundpos = background.get_rect(center=(w/2,h/2))
+	screen.blit(background,backgroundpos)		
+	pygame.display.flip()
+	return screen	
+	
+def createBoard(xSize,ySize):
+	board = [[(PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)) for x in range(9)] for x in range(9)]
+	for i in range(xSize):
+		board[0][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)
+		board[i][0] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0)
+		board[xSize-1][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)
+		board[i][xSize-1] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0)		
+	return board
+	
+def getPipeImage(tileNr):
+	return {
+		0: pipe_vertical_image,
+		1: pipe_turn_image,
+	}[tileNr]
+	
+def scrambleBoard(board):
+		for i in range(1,len(board)-1):
+			for j in range(1,len(board)-1):
+				image_nr = randint(0,1)
+				board[i][j].image = getPipeImage(image_nr)
+				board[i][j].start_image = getPipeImage(image_nr)
+				board[i][j].rotation = ((90 * (randint(0,3))) % 360)
+				board[i][j].rotate()
+				board[i][j].dirty = 1;
+	
+#screen
+w = 1600
+h = 900
+SQUARESIZE = int(h/9)
+UIStartX = int(SQUARESIZE*9)
+screen = startGraphics(w,h)
+xSize = 9
+ySize = 9
+panel = pygame.image.load("../res/panel.jpg").convert()
+panel = pygame.transform.scale(panel, (w-UIStartX, h))
+screen.blit(panel,(UIStartX, 0))
+	
+#mechanics
+play = 1
+water_flow_constant = 20
+#Colors
 BLACK = (0,0,0)
 WHITE = (255,255,255)
-waterFlowConstant = 20
+
+#Images
+pipe_filled_vertical_image = pygame.transform.scale(pygame.image.load("../res/pipe_filled_vertical_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_filled_turn_image = pygame.transform.scale(pygame.image.load("../res/pipe_filled_turn_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_filled_fixed_vertical_image = pygame.transform.scale(pygame.image.load("../res/pipe_filled_vertical_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_filled_fixed_horizontal_image = pygame.transform.scale(pygame.image.load("../res/pipe_filled_fixed_horizontal_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+
+pipe_vertical_image = pygame.transform.scale(pygame.image.load("../res/pipe_vertical_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_turn_image = pygame.transform.scale(pygame.image.load("../res/pipe_turn_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_fixed_vertical_image = pygame.transform.scale(pygame.image.load("../res/pipe_fixed_vertical_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+pipe_fixed_horizontal_image = pygame.transform.scale(pygame.image.load("../res/pipe_fixed_horizontal_image.png").convert(), (SQUARESIZE,SQUARESIZE))
+
+board = createBoard(xSize,ySize)
+scrambleBoard(board)
+#place starting water and make sure you dont instant lose (temp)
+board[0][4].image = pipe_filled_fixed_horizontal_image
+board[1][4].image = pipe_vertical_image
+board[1][4].start_image = pipe_vertical_image
+board[1][4].rotation = 90
+board[1][4].rotate()
+board[1][4].dirty = 1
+
+while play:
+	events = pygame.event.get()
+	for event in events:
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_RETURN:
+				pygame.display.quit()
+		elif event.type == pygame.MOUSEBUTTONDOWN:
+			(x,y) = pygame.mouse.get_pos()
+			(newX,newY) = (int(x/SQUARESIZE),int(y/SQUARESIZE))
+			if (newX < xSize - 1 and newY < ySize -1 and newX > 0 and newY > 0):
+				board[newX][newY].rotation = (board[newX][newY].rotation - 90) % 360
+				board[newX][newY].rotate()
+				board[newX][newY].dirty = 1
+				
+				
+				
+	for i in range(len(board)):
+		for j in range(len(board)):
+			if board[i][j].dirty == 1:
+				screen.blit(board[i][j].image,(i*SQUARESIZE,j*SQUARESIZE))
+				board[i][j].dirty = 0
+			#screen.blit(board[i][j].image,(i*SQUARESIZE,j*SQUARESIZE))
+	
+	pygame.display.flip()
+
+""""
+def getWaterTile(tileNr):
+	return {
+		0: "../res/pipeUpDownWater.png",
+        1: "../res/pipeTurnWater.png",
+        2: "../res/pipeTurnWater.png",
+		3: "../res/pipeTurnWater.png",
+		4: "../res/pipeStuckUpDownWater.png",
+		5: "../res/pipeStuckLeftRightWater.png",
+		
+		
+	}[tileNr]
+
+	
+def getTile(tileNr):
+	return {
+		0: "../res/pipeUpDown.png",
+        1: "../res/pipeTurn.png", #1: "pipeTsection.png",
+        2: "../res/pipeTurn.png",#2: "pipeCross.png",
+		3: "../res/pipeTurn.png",
+		4: "../res/pipeStuckUpDown.png",
+		5: "../res/pipeStuckLeftRight.png",
+		
+	}[tileNr]
 
 
 ##lets go
@@ -178,40 +304,8 @@ def resetWaterSquares(board,waterBoard,prev,curr):
 					board[i][j] = (randint(0,3),(randint(0,3) *90))
 
 
-def rot_center(image, angle):
-    """rotate an image while keeping its center and size"""
-    orig_rect = image.get_rect()
-    rot_image = pygame.transform.rotate(image, angle)
-    rot_rect = orig_rect.copy()
-    rot_rect.center = rot_image.get_rect().center
-    rot_image = rot_image.subsurface(rot_rect).copy()
-    return rot_image
-	
-def getWaterTile(tileNr):
-	return {
-		0: "../res/pipeUpDownWater.png",
-        1: "../res/pipeTurnWater.png",
-        2: "../res/pipeTurnWater.png",
-		3: "../res/pipeTurnWater.png",
-		4: "../res/pipeStuckUpDownWater.png",
-		5: "../res/pipeStuckLeftRightWater.png",
-		
-		
-	}[tileNr]
 
-	
-def getTile(tileNr):
-	return {
-		0: "../res/pipeUpDown.png",
-        1: "../res/pipeTurn.png", #1: "pipeTsection.png",
-        2: "../res/pipeTurn.png",#2: "pipeCross.png",
-		3: "../res/pipeTurn.png",
-		4: "../res/pipeStuckUpDown.png",
-		5: "../res/pipeStuckLeftRight.png",
 		
-	}[tileNr]
-
-	
 def createEmptyWaterBoard(xSquareNumber,ySquareNumber):
 	#board = [[(randint(0,3),(0)) for x in range(9)] for x in range(9)]
 	waterBoard = [[(0,0) for x in range(9)] for x in range(9)]
@@ -290,8 +384,7 @@ while play:
 		for j in range(len(board)):
 			tuple = board[i][j]
 			tileName = getTile(tuple[0])
-			gridpart = pygame.image.load(tileName).convert()
-			gridpart = pygame.transform.scale(gridpart, (SQUARESIZE,SQUARESIZE) )	
+				
 			gridpart = rot_center(gridpart,tuple[1]) #WOOT
 			
 			screen.blit(gridpart,(i*SQUARESIZE,j*SQUARESIZE))
@@ -327,4 +420,4 @@ while play:
 	clock.tick(60)
 				
 
-
+"""
