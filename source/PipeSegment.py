@@ -10,7 +10,7 @@ def rot_center(image, angle):
     return rot_image
 	
 class PipeSegment():
-	def __init__(self,fixed,rotation,image,water,id):
+	def __init__(self,fixed,rotation,image,water,id,water_image):
 		self.start_image = image
 		self.fixed = fixed
 		self.rotation = rotation
@@ -18,6 +18,12 @@ class PipeSegment():
 		self.dirty = 1
 		self.water = water
 		self.id = id
-		
+		self.water_image = water_image
 	def rotate(self):
 		self.image = rot_center(self.start_image,self.rotation)
+	def getImage(self):
+		if self.water == 1:
+			return self.water_image
+		else:
+			return self.image
+		

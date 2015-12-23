@@ -20,12 +20,12 @@ def startGraphics(w,h):
 	return screen	
 	
 def createBoard(xSize,ySize):
-	board = [[(PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)) for x in range(9)] for x in range(9)]
+	board = [[(PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)) for x in range(9)] for x in range(9)]
 	for i in range(xSize):
-		board[0][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)
-		board[i][0] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0)
-		board[xSize-1][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0)
-		board[i][xSize-1] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0)		
+		board[0][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)
+		board[i][0] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0,pipe_filled_fixed_vertical_image)
+		board[xSize-1][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)
+		board[i][xSize-1] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0,pipe_filled_fixed_vertical_image)		
 	return board
 	
 def getPipeImage(tileNr):
@@ -33,16 +33,75 @@ def getPipeImage(tileNr):
 		0: pipe_vertical_image,
 		1: pipe_turn_image,
 	}[tileNr]
-	
+def getFilledPipeImage(tileNr):
+	return {
+		0: pipe_filled_vertical_image,
+		1: pipe_filled_turn_image,
+	}[tileNr]
 def scrambleBoard(board):
 		for i in range(1,len(board)-1):
 			for j in range(1,len(board)-1):
-				image_nr = randint(0,1)
+				image_nr = randint(0,1)#todo variable board[i][j]
+				board[i][j].id = image_nr
 				board[i][j].image = getPipeImage(image_nr)
 				board[i][j].start_image = getPipeImage(image_nr)
+				board[i][j].water_image = getFilledPipeImage(image_nr)
 				board[i][j].rotation = ((90 * (randint(0,3))) % 360)
 				board[i][j].rotate()
+
 				board[i][j].dirty = 1;
+def water_tick():
+	global previousX
+	global previousY
+	global currentX
+	global currentY
+	gameOver = 0
+	up = 0 #up to down
+	left = 0 #left to right
+	if previousX < currentX:
+		left = 1
+	if previousY < currentY:
+		up = 1
+	if previousX > currentX:
+		left = 2
+	if previousY > currentY:
+		up = 2
+
+	tile = board[currentX][currentY]	
+	if tile.id == 0:
+		if tile.rotation == 90 or tile.rotation == 270:
+			if up == 1:
+				gameOver =1
+			elif up == 2:
+				gameOver = 1
+			elif left == 1:
+				board[currentX + 1][currentY].dirty = 1
+				board[currentX + 1][currentY].water = 1
+				previousX = currentX
+				currentX += 1
+				
+			elif left == 2:
+				board[currentX - 1][currentY].dirty = 1
+				board[currentX - 1][currentY].water = 1
+				previousX = currentX
+				currentX -= 1
+				
+		else:
+			if up == 1:
+				board[currentX][currentY+1].dirty = 1
+				board[currentX][currentY+1].water = 1
+				previousY = currentY
+				currentY += 1
+			elif up == 2:
+				board[currentX][currentY-1].dirty = 1
+				board[currentX][currentY-1].water = 1
+				previousY = currentY
+				currentY -= 1
+				
+			elif left == 1:
+				gameOver = 1
+			elif left == 2:
+				gameOver =1
 	
 #screen
 w = 1600
@@ -83,8 +142,15 @@ board[1][4].start_image = pipe_vertical_image
 board[1][4].rotation = 90
 board[1][4].rotate()
 board[1][4].dirty = 1
+board[1][4].id = 0
+
+previousX = -1
+previousY = 4
+currentX = 0
+currentY = 4
 
 while play:
+	#eventchain
 	events = pygame.event.get()
 	for event in events:
 		if event.type == pygame.KEYDOWN:
@@ -98,12 +164,16 @@ while play:
 				board[newX][newY].rotate()
 				board[newX][newY].dirty = 1
 				
+			
 				
-				
+	#watermovement
+	water_tick()
+
+	#paintloop
 	for i in range(len(board)):
 		for j in range(len(board)):
 			if board[i][j].dirty == 1:
-				screen.blit(board[i][j].image,(i*SQUARESIZE,j*SQUARESIZE))
+				screen.blit(board[i][j].getImage(),(i*SQUARESIZE,j*SQUARESIZE))
 				board[i][j].dirty = 0
 			#screen.blit(board[i][j].image,(i*SQUARESIZE,j*SQUARESIZE))
 	
