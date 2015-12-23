@@ -8,6 +8,8 @@ BLACK = (0,0,0)
 WHITE = (255,255,255)
 waterFlowConstant = 20
 
+
+##lets go
 def waterTick(waterBoard,board,prev,curr,score,scoreCheck):
 	(previousX,previousY) = prev
 	(currentX,currentY) = curr
