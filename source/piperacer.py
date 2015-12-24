@@ -22,10 +22,10 @@ def startGraphics(w,h):
 def createBoard(xSize,ySize):
 	board = [[(PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)) for x in range(9)] for x in range(9)]
 	for i in range(xSize):
-		board[0][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)
-		board[i][0] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0,pipe_filled_fixed_vertical_image)
-		board[xSize-1][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,0,pipe_filled_fixed_horizontal_image)
-		board[i][xSize-1] = PipeSegment(1,0,pipe_fixed_vertical_image,0,0,pipe_filled_fixed_vertical_image)		
+		board[0][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,2,pipe_filled_fixed_horizontal_image)
+		board[i][0] = PipeSegment(1,0,pipe_fixed_vertical_image,0,3,pipe_filled_fixed_vertical_image)
+		board[xSize-1][i] = PipeSegment(1,0,pipe_fixed_horizontal_image,0,2,pipe_filled_fixed_horizontal_image)
+		board[i][xSize-1] = PipeSegment(1,0,pipe_fixed_vertical_image,0,3,pipe_filled_fixed_vertical_image)		
 	return board
 	
 def getPipeImage(tileNr):
@@ -75,26 +75,18 @@ def water_tick():
 			elif up == 2:
 				gameOver = 1
 			elif left == 1:
-				board[currentX + 1][currentY].dirty = 1
-				board[currentX + 1][currentY].water = 1
 				previousX = currentX
 				currentX += 1
 				
 			elif left == 2:
-				board[currentX - 1][currentY].dirty = 1
-				board[currentX - 1][currentY].water = 1
 				previousX = currentX
 				currentX -= 1
 				
 		else:
 			if up == 1:
-				board[currentX][currentY+1].dirty = 1
-				board[currentX][currentY+1].water = 1
 				previousY = currentY
 				currentY += 1
 			elif up == 2:
-				board[currentX][currentY-1].dirty = 1
-				board[currentX][currentY-1].water = 1
 				previousY = currentY
 				currentY -= 1
 				
@@ -102,7 +94,51 @@ def water_tick():
 				gameOver = 1
 			elif left == 2:
 				gameOver =1
+				
+	elif tile.id == 1:
+		if tile.rotation == 90:
+			if up == 1:
+				gameOver =1
+			elif up == 2:
+				currentX -= 1
+			elif left == 1:
+				currentY += 1
+			elif left == 2:
+				gameOver =1
+		elif tile.rotation == 180:
+			if up == 1:
+				gameOver =1
+			elif up == 2:
+				currentX += 1
+			elif left == 1:
+				gameOver =1
+			elif left == 2:
+				currentY += 1
+				
+		elif tile.rotation == 270:
+			if up == 1:
+				currentX += 1
+			elif up == 2:
+				gameOver =1
+			elif left == 1:
+				gameOver =1
+				
+			elif left == 2:
+				currentY -= 1
+				
+		else:
+			if up == 1:
+				currentX -= 1
+			elif up == 2:
+				gameOver =1
+			elif left == 1:
+				currentY -= 1
+			elif left == 2:
+				gameOver =1
 	
+	
+	board[currentX][currentY].dirty = 1
+	board[currentX][currentY].water = 1
 #screen
 w = 1600
 h = 900
@@ -117,7 +153,7 @@ screen.blit(panel,(UIStartX, 0))
 	
 #mechanics
 play = 1
-water_flow_constant = 20
+water_flow_constant = 200
 #Colors
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -136,19 +172,22 @@ pipe_fixed_horizontal_image = pygame.transform.scale(pygame.image.load("../res/p
 board = createBoard(xSize,ySize)
 scrambleBoard(board)
 #place starting water and make sure you dont instant lose (temp)
-board[0][4].image = pipe_filled_fixed_horizontal_image
+board[0][4].start_image = pipe_filled_fixed_horizontal_image
+
 board[1][4].image = pipe_vertical_image
 board[1][4].start_image = pipe_vertical_image
+board[1][4].water_image = pipe_filled_vertical_image
+board[1][4].water = 1
 board[1][4].rotation = 90
-board[1][4].rotate()
 board[1][4].dirty = 1
 board[1][4].id = 0
 
-previousX = -1
+previousX = 0
 previousY = 4
-currentX = 0
+currentX = 1
 currentY = 4
 
+counter = 0
 while play:
 	#eventchain
 	events = pygame.event.get()
@@ -159,6 +198,7 @@ while play:
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			(x,y) = pygame.mouse.get_pos()
 			(newX,newY) = (int(x/SQUARESIZE),int(y/SQUARESIZE))
+			print(newX,newY)
 			if (newX < xSize - 1 and newY < ySize -1 and newX > 0 and newY > 0):
 				board[newX][newY].rotation = (board[newX][newY].rotation - 90) % 360
 				board[newX][newY].rotate()
@@ -166,8 +206,7 @@ while play:
 				
 			
 				
-	#watermovement
-	water_tick()
+	
 
 	#paintloop
 	for i in range(len(board)):
@@ -176,6 +215,14 @@ while play:
 				screen.blit(board[i][j].getImage(),(i*SQUARESIZE,j*SQUARESIZE))
 				board[i][j].dirty = 0
 			#screen.blit(board[i][j].image,(i*SQUARESIZE,j*SQUARESIZE))
+	
+	
+	
+	#watermovement
+	counter += 1
+	if counter == water_flow_constant:
+		water_tick()
+		counter = 0
 	
 	pygame.display.flip()
 

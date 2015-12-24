@@ -23,7 +23,7 @@ class PipeSegment():
 		self.image = rot_center(self.start_image,self.rotation)
 	def getImage(self):
 		if self.water == 1:
-			return self.water_image
+			return rot_center(self.water_image,self.rotation)
 		else:
-			return self.image
+			return rot_center(self.start_image,self.rotation)
 		
